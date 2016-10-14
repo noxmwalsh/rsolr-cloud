@@ -5,8 +5,8 @@ module RSolr
     class Connection < RSolr::Connection
       include MonitorMixin
 
-      ZNODE_LIVE_NODES  = '/live_nodes'.freeze
-      ZNODE_COLLECTIONS = '/collections'.freeze
+      ZNODE_LIVE_NODES  = '/solr-mini/live_nodes'.freeze
+      ZNODE_COLLECTIONS = '/solr-mini/collections'.freeze
 
       def initialize(zk)
         super()
@@ -123,7 +123,7 @@ module RSolr
       end
 
       def collection_state_znode_path(collection_name)
-        "/collections/#{collection_name}/state.json"
+        "/solr-mini/collections/#{collection_name}/state.json"
       end
 
       def active_node?(node)
