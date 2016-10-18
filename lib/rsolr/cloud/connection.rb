@@ -5,12 +5,14 @@ module RSolr
     class Connection < RSolr::Connection
       include MonitorMixin
 
-      ZNODE_LIVE_NODES  = '/solr-mini/live_nodes'.freeze
-      ZNODE_COLLECTIONS = '/solr-mini/collections'.freeze
+      #ZNODE_LIVE_NODES  = '/live_nodes'.freeze
+      #ZNODE_COLLECTIONS = '/collections'.freeze
 
-      def initialize(zk)
+      def initialize(zk, live_node_path = "", collections_path = "")
         super()
         @zk = zk
+        @znode_live_nodes_path = "#{live_node_path}/live_nodes"
+        @znode_collections_path = "#{collections_path}/collections"
         init_live_node_watcher
         init_collections_watcher
         update_urls
@@ -39,7 +41,7 @@ module RSolr
       end
 
       def init_live_node_watcher
-        @zk.register(ZNODE_LIVE_NODES) do
+        @zk.register(@znode_live_nodes_path) do
           update_live_nodes
           update_urls
         end
@@ -47,7 +49,7 @@ module RSolr
       end
 
       def init_collections_watcher
-        @zk.register(ZNODE_COLLECTIONS) do
+        @zk.register(@znode_collections_path) do
           update_collections
           update_urls
         end
@@ -77,14 +79,14 @@ module RSolr
       def update_live_nodes
         synchronize do
           @live_nodes = {}
-          @zk.children(ZNODE_LIVE_NODES, watch: true).each do |node|
+          @zk.children(@znode_live_nodes_path, watch: true).each do |node|
             @live_nodes[node] = true
           end
         end
       end
 
       def update_collections
-        collections = @zk.children(ZNODE_COLLECTIONS, watch: true)
+        collections = @zk.children(@znode_collections_path, watch: true)
         created = []
         synchronize do
           @collections ||= {}
@@ -123,7 +125,7 @@ module RSolr
       end
 
       def collection_state_znode_path(collection_name)
-        "/solr-mini/collections/#{collection_name}/state.json"
+        "#{@znode_collections_path}/#{collection_name}/state.json"
       end
 
       def active_node?(node)
